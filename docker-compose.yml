@@ -8,7 +8,7 @@
 # 首次密码：docker logs mediawarp 2>&1 | grep 初始密码
 services:
   mediawarp:
-    image: ghcr.io/YOUR_GITHUB_USER/mediawarp-panel:latest   # ← 改成你自己的镜像地址
+    image: ghcr.io/yq487900/mediawarp-panel:latest
     container_name: mediawarp
     restart: unless-stopped
     ports:

@@ -40,7 +40,7 @@
 ```yaml
 services:
   mediawarp:
-    image: ghcr.io/YOUR_GITHUB_USER/mediawarp-panel:latest
+    image: ghcr.io/yq487900/mediawarp-panel:latest
     container_name: mediawarp
     restart: unless-stopped
     ports:
@@ -66,7 +66,7 @@ docker logs mediawarp 2>&1 | grep 初始密码     # 拿首次登录密码
 ### 方式二：本地构建（想自己改代码 / 换 MediaWarp 版本）
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USER/mediawarp-panel.git
+git clone https://github.com/yq487900/mediawarp-panel.git   # 换成你 fork 的地址即可
 cd mediawarp-panel
 docker compose -f docker-compose.build.yml up -d --build
 
@@ -148,8 +148,11 @@ docker exec mediawarp python3 /opt/ui/reset_pw.py
 推到 `main`、或打 `v*` tag 时，自动构建 `linux/amd64` + `linux/arm64` 并推送
 `ghcr.io/<你的用户名>/<仓库名>`（`latest` 跟随默认分支）。
 
-首次发布后到 GitHub → 你的仓库 → 右侧 **Packages** → 打开刚生成的包 → **Package settings**
-→ 把可见性改成 **Public**（这样任何人都能直接 `docker compose up -d` 拉取）。
+**关于拉取权限**：仓库是 Public 时，GHCR 生成的包通常**会自动继承为 Public**，
+无需额外操作（本仓库的包实测无登录即可匿名拉取：`docker pull ghcr.io/yq487900/mediawarp-panel:latest`）。
+
+若你的包仍是 Private，到 GitHub → 仓库右侧 **Packages** → 打开该包 → **Package settings**
+→ 把可见性改成 **Public**，这样任何人都能直接 `docker compose up -d` 拉取。
 
 > 想保持私有也行：拉取机器先 `echo <PAT> | docker login ghcr.io -u <用户名> --password-stdin`。
 
