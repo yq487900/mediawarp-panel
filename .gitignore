@@ -1,0 +1,20 @@
+# 运行时数据（含 API 密钥 / 面板密码 / 会话）—— 绝对不要提交
+data/
+config/config.yaml
+config/config.yaml.bak.*
+ui_state.json
+ui_state.json.*
+sessions.json
+logs/
+static/
+
+# 备份与临时产物
+*.bak
+*.bak.*
+*.tmp
+*.log
+ui_preview.html
+
+# 系统垃圾
+.DS_Store
+Thumbs.db

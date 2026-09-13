@@ -1,0 +1,13 @@
+.git
+.gitignore
+.github
+data
+logs
+static
+config
+ui_state.json
+sessions.json
+*.bak
+*.bak.*
+*.md
+ui_preview.html

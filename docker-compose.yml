@@ -1,0 +1,28 @@
+# MediaWarp Panel —— 一条命令拉起（镜像已内置 MediaWarp 本体）
+#
+#   docker compose up -d
+#
+#   设置面板：  http://<主机IP>:9003
+#   媒体服务器：http://<主机IP>:9002
+#
+# 首次密码：docker logs mediawarp 2>&1 | grep 初始密码
+services:
+  mediawarp:
+    image: ghcr.io/YOUR_GITHUB_USER/mediawarp-panel:latest   # ← 改成你自己的镜像地址
+    container_name: mediawarp
+    restart: unless-stopped
+    ports:
+      - "9002:9000"        # MediaWarp 本体（容器内 9000）
+      - "9003:9009"        # 设置面板（容器内 9009）
+    environment:
+      - TZ=Asia/Shanghai
+      # - MW_PUBLIC_PORT=9002   # 「打开媒体服务器」按钮的对外端口（留空=自动探测）
+      # - MW_BIN=/opt/mediawarp/MediaWarp      # 默认已是这个，一般不用改
+    volumes:
+      - ./data:/app                         # 配置 / 日志 / 面板密码 / 会话都在这里
+      - /etc/localtime:/etc/localtime:ro    # 时区跟随宿主机
+    mem_limit: 256m
+    memswap_limit: 256m
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }

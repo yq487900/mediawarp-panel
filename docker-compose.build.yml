@@ -1,0 +1,29 @@
+# 本地源码构建版（镜像不预构建时用这个）
+#   docker compose -f docker-compose.build.yml up -d --build
+#
+# 想换 MediaWarp 版本：改下面的 MEDIAWARP_VERSION 再重新 build
+services:
+  mediawarp:
+    build:
+      context: .
+      # 构建时要联网下载 MediaWarp。若你的网络用 fake-ip DNS（旁路由/Clash 类），
+      # Docker 默认 bridge 网络解析到的是假 IP、会下载失败 —— 必须走 host 网络。
+      network: host
+      args:
+        MEDIAWARP_VERSION: "0.2.4"
+    image: mediawarp-panel:local
+    container_name: mediawarp
+    restart: unless-stopped
+    ports:
+      - "9002:9000"
+      - "9003:9009"
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./data:/app
+      - /etc/localtime:/etc/localtime:ro
+    mem_limit: 256m
+    memswap_limit: 256m
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }

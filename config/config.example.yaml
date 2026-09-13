@@ -1,0 +1,65 @@
+# MediaWarp 配置示例（脱敏版）
+# ---------------------------------------------------------------------------
+# 说明：
+#   · 镜像首次启动时，如果挂载目录里没有 config/config.yaml，面板会自动生成一份默认配置。
+#   · 平时用面板（http://<主机>:9003）改就行，不用手改这个文件。
+#   · 本文件只作为参考/手工初始化用；若使用，请复制到 ./data/config/config.yaml 再改。
+# ---------------------------------------------------------------------------
+
+Port: '9000'                                  # MediaWarp 监听端口（需与容器内 MW_PORT 一致）
+
+MediaServer:                                  # 上游媒体服务器
+  Type: Emby                                  # Emby / Jellyfin
+  ADDR: http://192.168.1.10:8096              # ← 改成你的 Emby/Jellyfin 地址
+  AUTH: ''                                    # ← 填 API 密钥（Emby 后台 → 高级 → API 密钥）
+
+Logger:                                       # 日志
+  AccessLogger:
+    Console: False
+    File: True
+  ServiceLogger:
+    Console: True
+    File: True
+
+Web:                                          # 网页端修改（美化）
+  Enable: True                                # 总开关；关掉就只是纯反代
+  Custom: True                                # 加载自定义静态资源
+  Index: False                                # 从 custom 目录读取 index.html
+  Head: |                                     # 注入到网页 <head> 的脚本
+    <script src="/MediaWarp/custom/emby-front-end-mod/actor-plus.js"></script>
+    <script src="/MediaWarp/custom/emby-front-end-mod/emby-swiper.js"></script>
+    <script src="/MediaWarp/custom/emby-front-end-mod/emby-tab.js"></script>
+    <script src="/MediaWarp/custom/emby-front-end-mod/fanart-show.js"></script>
+    <script src="/MediaWarp/custom/emby-front-end-mod/playbackRate.js"></script>
+  Crx:                True                    # crx 美化（剧照墙 / 界面美化）
+  ActorPlus:          True                    # 过滤没有头像的演员和制作人员
+  FanartShow:         True                    # 显示同人图（fanart）
+  ExternalPlayerUrl:  True                    # 外置播放器（仅 Emby）
+  Danmaku:            False                   # Web 弹幕
+  VideoTogether:      False                   # 共同观影
+
+ClientFilter:                                 # 客户端过滤器
+  Enable: False
+  Mode: BlackList                             # WhileList / BlackList
+  ClientList:
+    - Fileball
+    - Infuse
+
+HTTPStrm:                                     # HTTPStrm 重定向（上游是网盘 strm 时用）
+  Enable: False
+  TransCode: False
+  FinalURL: False
+  PrefixList:
+
+AlistStrm:                                    # AlistStrm 重定向（多 Alist 建议用面板的「原始 YAML」）
+  Enable: False
+  TransCode: False
+  RawURL: False
+  List:
+
+Subtitle:                                     # 字体相关设置（仅 Emby）
+  Enable: True
+  SRT2ASS: False
+  ASSStyle:
+    - "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    - "Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,1,0,2,10,10,10,1"
