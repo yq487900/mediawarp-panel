@@ -74,6 +74,20 @@ docker compose -f docker-compose.build.yml up -d --build
 docker build --network=host --build-arg MEDIAWARP_VERSION=0.2.4 -t mediawarp-panel:local .
 ```
 
+### 方式三：离线构建（用你自己手上的 MediaWarp 二进制）
+
+仓库里还有 `Dockerfile.local`：**完全不联网下载** MediaWarp，运行时直接使用数据目录里的
+`/app/MediaWarp`。适合内网 / fake-ip DNS 环境，或想固定用某个官方没发过 release 的版本。
+
+```bash
+git clone https://github.com/yq487900/mediawarp-panel.git
+cd mediawarp-panel
+mkdir -p data && cp /你的路径/MediaWarp data/     # 放入你现成的二进制
+docker build -f Dockerfile.local -t mediawarp-panel:local .
+docker run -d --name mediawarp -p 9002:9000 -p 9003:9009 \
+  -v "$PWD/data":/app -e TZ=Asia/Shanghai mediawarp-panel:local
+```
+
 > ⚠️ **本地构建必须能直连 GitHub**（要下载 MediaWarp 发行包）。
 > 如果你的网络用了 **fake-ip DNS**（旁路由 / Clash 类代理很常见：域名被解析成 `198.x.x.x` 之类的假地址），
 > Docker 默认的 bridge 网络会**解析到假 IP 而下载失败**——用 `--network=host` 构建即可

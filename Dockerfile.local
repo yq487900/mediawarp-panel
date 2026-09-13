@@ -1,0 +1,43 @@
+# ============================================================================
+# Dockerfile.local —— 本地 / 离线构建（不使用 FROM 官方 Release 下载）
+# ============================================================================
+# 与仓库根目录的 Dockerfile 的区别：
+#   Dockerfile       → 构建时从 GitHub Release **下载** MediaWarp 二进制（联网、默认最新版）
+#   Dockerfile.local → **不下载**，运行时直接使用挂载目录里的 /app/MediaWarp
+#
+# 适合这些场景：
+#   · 无法访问 GitHub（fake-ip DNS / 内网 / 被墙）
+#   · 想固定用自己手上某个 MediaWarp 版本（例如官方没有发过 release 的版本）
+#   · 构建要快（几秒，无需下载）
+#
+# 用法：
+#   docker compose -f <你的 compose> up -d --build
+#   或：docker build -f Dockerfile.local -t mediawarp-av:1 .
+#
+#   注意：需要把 MediaWarp 二进制放到容器的 /app（即数据卷）里，例如
+#        /vol4/1000/Docker/mediawarp-av/MediaWarp
+#   面板默认就会去找 /app/MediaWarp（也可用环境变量 MW_BIN 指定别处）。
+# ============================================================================
+FROM python:3.12-alpine
+
+# tzdata：让 TZ=Asia/Shanghai 在 alpine(musl) 下真正生效
+RUN apk add --no-cache tzdata curl ca-certificates \
+ && pip install --no-cache-dir pyyaml
+
+ENV MW_HOME=/app \
+    UI_PORT=9009 \
+    MW_PORT=9000 \
+    TZ=Asia/Shanghai \
+    PYTHONUNBUFFERED=1
+
+COPY app.py /opt/ui/app.py
+COPY reset_pw.py /opt/ui/reset_pw.py
+
+# 容器内部：9000 = MediaWarp 反代本体，9009 = 设置面板
+EXPOSE 9000 9009
+WORKDIR /app
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD ["python3", "-c", "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:9009/health', timeout=4).status == 200 else 1)"]
+
+CMD ["python3", "/opt/ui/app.py"]
