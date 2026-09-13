@@ -18,6 +18,8 @@ services:
       - TZ=Asia/Shanghai
       # - MW_PUBLIC_PORT=9002   # 「打开媒体服务器」按钮的对外端口（留空=自动探测）
       # - MW_BIN=/opt/mediawarp/MediaWarp      # 默认已是这个，一般不用改
+      # - SITE_NAME=emby-av                    # 站点名：显示在页面标题/页头（不留则通用标题）
+      # - CONTAINER_NAME=mediawarp             # 排障提示里 docker logs/exec 用的容器名
     volumes:
       - ./data:/app                         # 配置 / 日志 / 面板密码 / 会话都在这里
       - /etc/localtime:/etc/localtime:ro    # 时区跟随宿主机

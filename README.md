@@ -128,6 +128,8 @@ data/
 | `UI_PORT` | `9009` | 面板监听端口 |
 | `MW_PORT` | `9000` | MediaWarp 监听端口（默认与 `config.yaml` 的 `Port` 一致） |
 | `MW_PUBLIC_PORT` | 空 | 「打开媒体服务器」按钮用的对外端口；留空则自动探测 |
+| `SITE_NAME` | 空 | 站点名，显示在浏览器标题 / 页头 / 登录页（如 `SITE_NAME=emby-av`）；留空则显示通用标题 |
+| `CONTAINER_NAME` | `mediawarp` | 页面排障提示里 `docker logs` / `docker exec` 示例用的容器名 |
 | `MW_CFG_FMT` | `new` | 首次生成配置用哪种格式：`new`=0.2.x / `old`=0.1.x（已有配置时以文件实际格式为准）|
 
 ---

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""MediaWarp (emby-av) 设置面板 + 进程守护  ——  单上游版 + 密码模式
+"""MediaWarp 设置面板 + 进程守护  ——  单上游版 + 密码模式
    · 9002 = MediaWarp 本体（一份配置：/app/config/config.yaml）
    · 9003 = 本面板：卡片式设置 / 原始 YAML / 日志；底部固定操作条
    · 密码模式：
@@ -40,6 +40,13 @@ MW = os.environ.get('MW_BIN') or os.path.join(APP, 'MediaWarp')
 MW_LOG = os.path.join(APP, 'logs', 'mediawarp.out')
 UI_PORT = int(os.environ.get('UI_PORT', '9009'))
 MW_PORT = os.environ.get('MW_PORT', '9000')
+# 站点名：显示在页面标题/页头/登录页（留空则显示通用标题，不暴露具体环境）
+SITE_NAME = os.environ.get('SITE_NAME', '').strip()
+SITE_SUFFIX = (' \u00b7 ' + SITE_NAME) if SITE_NAME else ''
+SITE_SPAN = ('<span class="sub">%s</span>' % html.escape(SITE_NAME)) if SITE_NAME else ''
+SITE_TAG = (html.escape(SITE_NAME) + ' \u4e13\u7528') if SITE_NAME else 'MediaWarp \u53cd\u5411\u4ee3\u7406 \u00b7 \u8bbe\u7f6e\u9762\u677f'
+# 容器名：日志/排障提示里 docker logs / docker exec 示例用的名字
+CONTAINER = os.environ.get('CONTAINER_NAME', 'mediawarp').strip() or 'mediawarp'
 
 _proc = None
 _lock = threading.Lock()
@@ -888,7 +895,7 @@ def esc(v):
 def shell(content):
     return ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
-            '<meta name="color-scheme" content="dark"><title>MediaWarp 面板 · emby-av</title>'
+            '<meta name="color-scheme" content="dark"><title>MediaWarp 面板' + SITE_SUFFIX + '</title>'
             '<style>' + CSS + '</style></head><body>' + content +
             '<script>' + JS + '</script></body></html>')
 
@@ -920,12 +927,12 @@ def toasts(items):
 
 
 def login_page(err='', warn='', host='127.0.0.1', init_hint=False):
-    foot = (('<div class="hint">首次使用：密码在容器日志里<br><kbd>docker logs mediawarp-av | grep 初始密码</kbd>'
-             '<div class="steps">首次登录后会被要求设置你自己的新密码。</div></div>') if init_hint else
-            ('<div class="hint">忘记密码：<kbd>docker exec mediawarp-av python3 /opt/ui/reset_pw.py</kbd>'
-             ' → 会打印一个新的初始密码</div>'))
+    foot = ((('<div class="hint">首次使用：密码在容器日志里<br><kbd>docker logs %s | grep 初始密码</kbd>'
+              '<div class="steps">首次登录后会被要求设置你自己的新密码。</div></div>') % CONTAINER) if init_hint else
+            (('<div class="hint">忘记密码：<kbd>docker exec %s python3 /opt/ui/reset_pw.py</kbd>'
+              ' → 会打印一个新的初始密码</div>') % CONTAINER))
     body = ('<div class="center"><div class="lcard"><h1>MediaWarp 面板</h1>'
-            '<div class="d">emby-av 专用 &nbsp;<span class="badge">:9002 → :28096</span></div>'
+            '<div class="d">' + SITE_TAG + '</div>'
             + toasts([('err', err, 0), ('warn', warn, 0)])
             + '<form method="post" action="/login"><label class="f">面板密码</label>'
               '<input class="in" type="password" name="pw" id="pw" autofocus autocomplete="current-password">'
@@ -977,7 +984,7 @@ def panel_page(cfg, msg='', err='', warn='', host='127.0.0.1', ext_port=None,
     stat = ('<span class="pill %s"><span class="dot"></span>MediaWarp %s</span>'
             % ('on' if run else 'off', '运行中' if run else '已停止'))
     mw_url = 'http://' + esc(host) + ':' + str(pub) + '/web/index.html'
-    head = ('<header class="top"><div class="tin"><h1>MediaWarp 设置面板<span class="sub">emby-av</span></h1>'
+    head = ('<header class="top"><div class="tin"><h1>MediaWarp 设置面板' + SITE_SPAN + '</h1>'
             + stat
             + '<span class="pill">上游 ' + esc(ms.get('ADDR') or '(未设置)') + '</span>'
             + '<span class="pill">媒体服务器端口 ' + str(pub) + '（' + esc(pub_src) + '）</span>'
@@ -1261,7 +1268,7 @@ class H(BaseHTTPRequestHandler):
             print('[UI] 登录失败（%s，密码长度 %d）' % (self.client_address[0], len(pw)), flush=True)
             warn = ''
             if not load_state().get('initialized'):
-                warn = '请使用容器日志里的「初始密码」登录（docker logs mediawarp-av | grep 初始密码）'
+                warn = '请使用容器日志里的「初始密码」登录（docker logs %s | grep 初始密码）' % CONTAINER
             return self._send(401, login_page(err='密码不对，请重试（注意：首尾空格会被忽略；密码区分大小写）', warn=warn,
                                               init_hint=not load_state().get('initialized')))
         if p == '/setpass':

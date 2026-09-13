@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """忘记密码时用：生成一个新的「初始密码」，立即生效（登录后仍会被要求设置新密码）
-   用法（在容器里跑）：docker exec mediawarp-av python3 /opt/ui/reset_pw.py
+   用法（在容器里跑）：docker exec <你的容器名> python3 /opt/ui/reset_pw.py
    ⚠️ 会先备份现有状态到 ui_state.json.prewreset.<时间>，方便误重置后回退"""
 import hashlib
 import json
