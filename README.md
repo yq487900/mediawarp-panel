@@ -1,13 +1,18 @@
 # MediaWarp Panel
+## ⚠️写在前面
+> ⚠️ **本项目不是 MediaWarp 本身。** MediaWarp 的版权归其作者 **[AkimioJR](https://github.com/AkimioJR)**，采用 **AGPL-3.0 修改版许可**（禁止商用；使用其代码须开源并注明出处）。本仓库只包含**外挂面板**的代码，
+> MediaWarp 二进制在**构建镜像时从官方 Release 下载**，不随仓库分发。详见 [NOTICE](NOTICE)。
+---
+> ⚠️ **本项目是个人用AI修改出来的，仅个人使用！！！** 
+> ⚠️ **使用本项目产生的任何问题不负任何责任，有问题我也不会解决**(我只会靠AI)
 
+---
+
+## 简介
 给 [MediaWarp](https://github.com/AkimioJR/MediaWarp) 套一个**网页设置面板**的 Docker 镜像。
 
 不用再手改 `config.yaml`、也不用「改完还要手动重启容器才生效」——在网页上改完点一下，
 面板会在 0.2~0.5 秒内自动重载 MediaWarp 并**确认生效**，结果直接显示在页面上。
-
-> ⚠️ **本项目不是 MediaWarp 本身。** MediaWarp 的版权归其作者 **AkimioJR**，采用
-> **AGPL-3.0 修改版许可**（禁止商用；使用其代码须开源并注明出处）。本仓库只包含**外挂面板**的代码，
-> MediaWarp 二进制在**构建镜像时从官方 Release 下载**，不随仓库分发。详见 [NOTICE](NOTICE)。
 
 ---
 
