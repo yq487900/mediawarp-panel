@@ -50,6 +50,7 @@ CONTAINER = os.environ.get('CONTAINER_NAME', 'mediawarp').strip() or 'mediawarp'
 
 _proc = None
 _lock = threading.Lock()
+_maint_until = 0.0                  # 看门狗静默期：主动重启（保存配置）期间不去抢进程
 _sessions = {}                      # sid -> {'t': ts, 'must': bool}
 PBKDF2_ROUNDS = 120000
 MIN_PW = 6
@@ -182,7 +183,8 @@ def start_mw():
 
 
 def stop_mw():
-    global _proc
+    global _proc, _maint_until
+    _maint_until = time.time() + 12      # 主动重启窗口：看门狗在这段时间内不插手
     with _lock:
         if not mw_running():
             return 'not-running'
@@ -198,6 +200,46 @@ def restart_mw():
     stop_mw()
     time.sleep(0.4)
     return start_mw()
+
+
+def mw_log_note(text):
+    """把一条面板消息写进 MediaWarp 日志 —— 面板「日志」标签看的就是这个文件，保证用户能看见"""
+    try:
+        with open(MW_LOG, 'ab') as f:
+            f.write(('[UI] %s %s\n' % (time.strftime('%F %T'), text)).encode())
+    except Exception as ex:
+        print('[UI] 写日志失败：%s' % ex, flush=True)
+
+
+def _watchdog():
+    """守护 MediaWarp：进程没了或端口不监听，连续 3 次（约 30 秒）判定异常就自动拉起。
+
+    2026-09-19 踩过的坑：MediaWarp 被内核 cgroup OOM 杀掉后，面板只显示「已停止」，
+    没有任何机制把它拉起来 → 表现成「AV 网页一会儿能开一会儿打不开」，日志里还看不出原因。
+    """
+    global _maint_until
+    down = 0
+    while True:
+        time.sleep(10)
+        try:
+            if time.time() < _maint_until:          # 主动重启（保存配置）期间不插手
+                down = 0
+                continue
+            alive = mw_running()
+            if alive and mw_tcp_ok():
+                down = 0
+                continue
+            down += 1
+            if down >= 3:
+                why = '进程已退出' if not alive else ('进程在但端口 %s 没监听' % MW_PORT)
+                print('[UI] ⚠ 看门狗：MediaWarp %s，正在自动重启…' % why, flush=True)
+                mw_log_note('⚠ 看门狗：MediaWarp %s，已自动重启（如反复出现请检查内存上限/Docker 日志）' % why)
+                stop_mw()
+                time.sleep(0.4)
+                start_mw()
+                down = 0
+        except Exception as ex:
+            print('[UI] 看门狗异常：%s' % ex, flush=True)
 
 
 def mw_tcp_ok(port=None, tmo=0.6):
@@ -1380,6 +1422,7 @@ def main():
         write_cfg(render_cfg({'_fmt': DEFAULT_CFG_FMT}))
         print('[UI] 已生成初始配置（格式：%s）' % DEFAULT_CFG_FMT, flush=True)
     start_mw()
+    threading.Thread(target=_watchdog, daemon=True).start()   # MediaWarp 崩溃/被 OOM 杀掉后自动拉起
     print('[UI] 设置面板: http://0.0.0.0:%d  (MediaWarp 已启动，端口 %s)' % (UI_PORT, MW_PORT), flush=True)
     if first:
         print('[UI] 请先用上面的初始密码登录，然后设置你自己的新密码。', flush=True)

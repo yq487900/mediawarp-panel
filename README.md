@@ -40,6 +40,8 @@
 - 内存上限 256 MiB 且禁用 swap
 - `HEALTHCHECK`（`docker ps` 能看到 `(healthy)`）
 - MediaWarp 日志超过 5 MB 自动轮转（`.1/.2/.3`）
+- **MediaWarp 进程守护（看门狗）**：MediaWarp 万一崩溃/被系统 OOM 杀掉，面板会在 ~30 秒内自动把它拉起来，
+  并把「已自动重启」写进「日志」（以前挂了只会显示「已停止」，得手动保存配置或重启容器才能恢复）
 - **多架构镜像**：`linux/amd64` + `linux/arm64`（构建时按架构拉对应的官方二进制）
 
 ---
@@ -54,7 +56,7 @@
 |---|---|
 | 镜像（Docker Hub） | `xiaoyu96/mediawarp-panel:latest` |
 | 镜像（GHCR，备用） | `ghcr.io/yq487900/mediawarp-panel:latest` |
-| 可用 tag | `latest`（最新版）/ `1.0.0`（首个发布版）——两者是同一个镜像 |
+| 可用 tag | `latest`（最新版）/ `1.0.1`（当前版本号）——两者是同一个镜像 |
 | 架构 | `linux/amd64`、`linux/arm64`（x86 服务器 / 群晖、树莓派等 arm 设备都能跑） |
 | 端口 | 容器内 `9000`＝MediaWarp 本体、`9009`＝设置面板（下面示例映射成 `9002` / `9003`） |
 | 手动拉取 | `docker pull xiaoyu96/mediawarp-panel:latest` |
