@@ -1,4 +1,12 @@
 # MediaWarp Panel
+
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-xiaoyu96%2Fmediawarp--panel-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/xiaoyu96/mediawarp-panel)
+[![Docker Pulls](https://img.shields.io/docker/pulls/xiaoyu96/mediawarp-panel)](https://hub.docker.com/r/xiaoyu96/mediawarp-panel)
+[![Image Size](https://img.shields.io/docker/image-size/xiaoyu96/mediawarp-panel/latest)](https://hub.docker.com/r/xiaoyu96/mediawarp-panel/tags)
+[![Platform](https://img.shields.io/badge/platform-amd64%20%7C%20arm64-2496ED)](https://hub.docker.com/r/xiaoyu96/mediawarp-panel/tags)
+[![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fyq487900%2Fmediawarp--panel-181717?logo=github)](https://github.com/yq487900/mediawarp-panel/pkgs/container/mediawarp-panel)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ## ⚠️写在前面
 > ⚠️ **本项目不是 MediaWarp 本身。** MediaWarp 的版权归其作者 **[AkimioJR](https://github.com/AkimioJR)**，采用 **AGPL-3.0 修改版许可**（禁止商用；使用其代码须开源并注明出处）。本仓库只包含**外挂面板**的代码，
 > MediaWarp 二进制在**构建镜像时从官方 Release 下载**，不随仓库分发。详见 [NOTICE](NOTICE)。
@@ -38,35 +46,74 @@
 
 ## 快速开始
 
-### 方式一：用现成镜像（推荐，一条命令）
+### 方式一：用现成镜像（推荐，复制粘贴即可）
 
-把下面存成 `docker-compose.yml`：
+**镜像地址（点这里直达 Docker Hub）**：<https://hub.docker.com/r/xiaoyu96/mediawarp-panel>
+
+| | |
+|---|---|
+| 镜像（Docker Hub） | `xiaoyu96/mediawarp-panel:latest` |
+| 镜像（GHCR，备用） | `ghcr.io/yq487900/mediawarp-panel:latest` |
+| 可用 tag | `latest`（最新版）/ `1.0.0`（首个发布版）——两者是同一个镜像 |
+| 架构 | `linux/amd64`、`linux/arm64`（x86 服务器 / 群晖、树莓派等 arm 设备都能跑） |
+| 端口 | 容器内 `9000`＝MediaWarp 本体、`9009`＝设置面板（下面示例映射成 `9002` / `9003`） |
+| 手动拉取 | `docker pull xiaoyu96/mediawarp-panel:latest` |
+
+**1️⃣ 建目录，把下面这段存成 `docker-compose.yml`**
+
+```bash
+mkdir -p mediawarp && cd mediawarp
+```
 
 ```yaml
 services:
   mediawarp:
-    image: ghcr.io/yq487900/mediawarp-panel:latest
+    image: xiaoyu96/mediawarp-panel:latest   # 想用 GHCR 就换成 ghcr.io/yq487900/mediawarp-panel:latest
     container_name: mediawarp
     restart: unless-stopped
     ports:
-      - "9002:9000"        # MediaWarp 本体
+      - "9002:9000"        # MediaWarp 本体（宿主端口被占就改左边）
       - "9003:9009"        # 设置面板
     environment:
       - TZ=Asia/Shanghai
+      # - MW_PUBLIC_PORT=9002     # 「打开媒体服务器」按钮的对外端口（留空=自动探测）
+      # - SITE_NAME=mediawarp     # 站点名：显示在页面标题/页头（不留则通用标题）
+      # - CONTAINER_NAME=mediawarp # 排障提示里 docker logs/exec 用的容器名
     volumes:
-      - ./data:/app
-      - /etc/localtime:/etc/localtime:ro
+      - ./data:/app                           # 配置 / 日志 / 面板密码 / 会话都在这里，别删
+      - /etc/localtime:/etc/localtime:ro       # 时区跟随宿主机
     mem_limit: 256m
     memswap_limit: 256m
 ```
 
+**2️⃣ 启动**
+
 ```bash
 docker compose up -d
-docker logs mediawarp 2>&1 | grep 初始密码     # 拿首次登录密码
+docker logs mediawarp 2>&1 | grep 初始密码      # 拿首次登录密码
 ```
 
-然后浏览器打开 **`http://<主机IP>:9003`**，用初始密码登录（会要求你重设密码），
+**3️⃣ 打开面板（首次登录）**
+
+浏览器打开 **`http://<主机IP>:9003`** → 用上面的初始密码登录（会要求你重设密码）→
 在「上游媒体服务器」里填 Emby/Jellyfin 地址与 API 密钥即可。
+
+**更新到最新版**：
+
+```bash
+docker compose pull && docker compose up -d      # ./data 不动，配置和登录状态都保留
+```
+
+> 不用 compose 的话，等价的单条命令：
+>
+> ```bash
+> docker run -d --name mediawarp --restart unless-stopped \
+>   -p 9002:9000 -p 9003:9009 \
+>   -e TZ=Asia/Shanghai \
+>   -v "$PWD/data:/app" -v /etc/localtime:/etc/localtime:ro \
+>   --memory 256m --memory-swap 256m \
+>   xiaoyu96/mediawarp-panel:latest
+> ```
 
 ### 方式二：本地构建（想自己改代码 / 换 MediaWarp 版本）
 
@@ -163,13 +210,35 @@ docker exec mediawarp python3 /opt/ui/reset_pw.py
 
 ---
 
-## 自己构建并发布镜像（GHCR）
+## 镜像发布（GHCR + Docker Hub）
 
-仓库自带 GitHub Actions（`.github/workflows/docker-publish.yml`）：
-推到 `main`、或打 `v*` tag 时，自动构建 `linux/amd64` + `linux/arm64` 并推送
-`ghcr.io/<你的用户名>/<仓库名>`（`latest` 跟随默认分支）。
+仓库自带 GitHub Actions（`.github/workflows/docker-publish.yml`）：推到 `main`、或打 `v*` tag 时，
+自动构建 `linux/amd64` + `linux/arm64` 并**同时推送两处**：
 
-**关于拉取权限**：仓库是 Public 时，GHCR 生成的包通常**会自动继承为 Public**，
+| 位置 | 镜像名 | 说明 |
+|---|---|---|
+| **Docker Hub** | `xiaoyu96/mediawarp-panel` | <https://hub.docker.com/r/xiaoyu96/mediawarp-panel> |
+| GHCR | `ghcr.io/yq487900/mediawarp-panel` | 公开仓库的包可匿名拉取 |
+
+**tag 规则（只有两个）**：
+
+| tag | 什么时候出现 | 指向 |
+|---|---|---|
+| `latest` | 每次推 `main` 或打 `v*` tag | 最新一次发布 |
+| `1.0.0` 这样的版本号 | 只在打 `v*` tag 时 | 与 `latest` **同一个镜像**（同一 digest） |
+
+发新版：
+
+```bash
+git tag v1.1.0 && git push origin v1.1.0     # 构建出 1.1.0 + latest（同一个镜像）
+```
+
+> 纯文档改动（`**.md` / `LICENSE` / `NOTICE`）不触发构建，省 CI 时间、也不会产生无意义的新镜像。
+
+**要发到自己的 Docker Hub（fork 后）**：Settings → Secrets and variables → Actions 里加两个密钥
+`DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN`（Token 权限要 **Read & Write**）；没配就只推 GHCR，不会报红。
+
+**GHCR 拉取权限**：仓库是 Public 时，GHCR 生成的包通常**会自动继承为 Public**，
 无需额外操作（本仓库的包实测无登录即可匿名拉取：`docker pull ghcr.io/yq487900/mediawarp-panel:latest`）。
 
 若你的包仍是 Private，到 GitHub → 仓库右侧 **Packages** → 打开该包 → **Package settings**
