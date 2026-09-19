@@ -27,8 +27,9 @@ services:
     volumes:
       - ./data:/app                         # 配置 / 日志 / 面板密码 / 会话都在这里
       - /etc/localtime:/etc/localtime:ro    # 时区跟随宿主机
-    mem_limit: 256m
-    memswap_limit: 256m
+    # MediaWarp 0.2.x 带图片/字幕内存缓存，比 0.1.x 吃内存：256m 会在浏览/播放时被 OOM 杀掉（实测）
+    mem_limit: 512m
+    memswap_limit: 512m
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }

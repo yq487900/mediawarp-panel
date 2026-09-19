@@ -37,7 +37,7 @@
 
 **容器已内置的加固**
 - 时区跟随宿主机（`TZ` + 挂 `/etc/localtime`）
-- 内存上限 256 MiB 且禁用 swap
+- 内存上限默认 512 MiB（0.2.x 的内存缓存需要；实测 256 MiB 会在浏览/播放时被系统 OOM 杀掉）、swap 与上限一致
 - `HEALTHCHECK`（`docker ps` 能看到 `(healthy)`）
 - MediaWarp 日志超过 5 MB 自动轮转（`.1/.2/.3`）
 - **MediaWarp 进程守护（看门狗）**：MediaWarp 万一崩溃/被系统 OOM 杀掉，面板会在 ~30 秒内自动把它拉起来，
@@ -84,8 +84,8 @@ services:
     volumes:
       - ./data:/app                           # 配置 / 日志 / 面板密码 / 会话都在这里，别删
       - /etc/localtime:/etc/localtime:ro       # 时区跟随宿主机
-    mem_limit: 256m
-    memswap_limit: 256m
+    mem_limit: 512m          # 0.2.x 带图片/字幕内存缓存，512m 稳妥（256m 实测会被 OOM 杀掉）
+    memswap_limit: 512m
 ```
 
 **2️⃣ 启动**
@@ -113,7 +113,7 @@ docker compose pull && docker compose up -d      # ./data 不动，配置和登�
 >   -p 9002:9000 -p 9003:9009 \
 >   -e TZ=Asia/Shanghai \
 >   -v "$PWD/data:/app" -v /etc/localtime:/etc/localtime:ro \
->   --memory 256m --memory-swap 256m \
+>   --memory 512m --memory-swap 512m \
 >   xiaoyu96/mediawarp-panel:latest
 > ```
 

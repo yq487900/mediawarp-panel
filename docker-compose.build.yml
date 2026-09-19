@@ -22,8 +22,9 @@ services:
     volumes:
       - ./data:/app
       - /etc/localtime:/etc/localtime:ro
-    mem_limit: 256m
-    memswap_limit: 256m
+    # 0.2.x 带内存缓存，别低于 512m（256m 实测会被 OOM kill）
+    mem_limit: 512m
+    memswap_limit: 512m
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
