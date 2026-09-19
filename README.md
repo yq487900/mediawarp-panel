@@ -260,6 +260,18 @@ git tag v1.1.0 && git push origin v1.1.0     # 构建出 1.1.0 + latest（同一
 
 ---
 
+## 常见问题（FAQ）
+
+| 现象 | 原因与处理 |
+|---|---|
+| 网页一直转圈，浏览器标签显示「每日推荐」，页面只显示出服务器名 | **重复注入了美化脚本**。MediaWarp 0.2.x 在 `web.crx` / `web.actor_plus` / `web.fanart_show` 打开时**自己就会注入**这些脚本（`/MediaWarp/static/emby-web-mod/…`、`/MediaWarp/static/emby-crx/…`）。如果你又在「原始 YAML」的 `web.head` 里写了 `/MediaWarp/custom/emby-front-end-mod/*.js`（官方 `config.yaml.example` 里的那段），同一脚本会被加载两遍 → 前端死循环。**把 `web.head` 留空、并删掉 `custom/emby-front-end-mod/` 即可**。判断口诀：服务端访问日志全是 200，但页面转圈 = 前端 JS 的问题；`curl http://<IP>:9002/web/index.html \| grep '<script src='` 数一下有没有重复。 |
+| `docker ps` 显示 `(healthy)`，但 AV 网页打不开、面板显示「已停止」 | MediaWarp 进程崩了或**被系统 OOM 杀掉**（`docker inspect <容器> --format '{{.State.OOMKilled}}'` 会是 true；`dmesg -T \| grep -i "killed process"` 有记录）。0.2.x 带图片/字幕内存缓存，请把 `mem_limit` 设为 **512m 或更高**（256m 实测会被杀）。**v1.0.1 起面板自带看门狗**，异常约 30 秒后会自动拉起，并在「日志」里留一条记录。 |
+| 改了「原始 YAML」/ 表单后怎么生效 | 点「保存并立即生效」：面板会重启 MediaWarp 进程（约 0.2 秒）并确认端口已监听，失败会自动重试一次。 |
+| 上游换成别的 Emby/Jellyfin | 在「上游媒体服务器」卡片里改地址 + API 密钥 → 保存即生效。 |
+| 忘记面板密码 | 宿主机上 `docker exec <容器名> python3 /opt/ui/reset_pw.py`，会打印一个新的初始密码。 |
+
+---
+
 ## 许可与致谢
 
 - **本面板代码**（`app.py` / `reset_pw.py` / `Dockerfile` / compose 等）：MIT，见 [LICENSE](LICENSE)
